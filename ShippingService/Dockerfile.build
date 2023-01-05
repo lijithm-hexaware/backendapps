@@ -1,0 +1,23 @@
+FROM mcr.microsoft.com/dotnet/aspnet:3.1 AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
+WORKDIR /src
+COPY ["Code/ShippingService.Api/ShippingService.Api.csproj", "Code/ShippingService.Api/"]
+COPY ["Code/ShippingService.Business/ShippingService.Business.csproj", "Code/ShippingService.Business/"]
+COPY ["Code/ShippingService.Data/ShippingService.Data.csproj", "Code/ShippingService.Data/"]
+COPY ["Code/ShippingService.Entities/ShippingService.Entities.csproj", "Code/ShippingService.Entities/"]
+COPY ["Code/ShippingService.Test.Api/ShippingService.Test.Api.csproj", "Code/ShippingService.Test.Api/"]
+COPY ["Code/ShippingService.Test.Business/ShippingService.Test.Business.csproj", "Code/ShippingService.Test.Business/"]
+RUN dotnet restore "Code/ShippingService.Api/ShippingService.Api.csproj"
+COPY . .
+WORKDIR "/src/Code/ShippingService.Api"
+RUN dotnet build "ShippingService.Api.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "ShippingService.Api.csproj" -c Release -o /app/publish
+
+WORKDIR /src
+RUN dotnet test --results-directory /testresults --logger "trx;LogFileName=testresults.Api.trx" /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=/testresults/coverage/ /p:MergeWith=/testresults/coverage/coverage.json "Code/ShippingService.Test.Api/ShippingService.Test.Api.csproj"
+RUN dotnet test --results-directory /testresults --logger "trx;LogFileName=testresults.Api.trx" /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=/testresults/coverage/ /p:MergeWith=/testresults/coverage/coverage.json "Code/ShippingService.Test.Business/ShippingService.Test.Business.csproj"
