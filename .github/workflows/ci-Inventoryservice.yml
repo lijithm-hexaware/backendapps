@@ -37,3 +37,9 @@ jobs:
         run: |-
           docker build ${{ env.DOCKER_BUILD_CONTEXT }} -f ${{ env.DOCKER_FILE_PATH }} -t ${{ secrets.CR_LOGIN_SERVER }}/${{ env.REPOSITORY_NAME }}:Inventoryservice
           docker push ${{ secrets.CR_LOGIN_SERVER }}/${{ env.REPOSITORY_NAME }}:Inventoryservice
+      - name: unittest
+        uses: dorny/test-reporter@v1
+        with:
+          name: test-results
+          path: '**/*.trx'
+          reporter: dotnet-trx
